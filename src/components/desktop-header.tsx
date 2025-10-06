@@ -12,14 +12,21 @@ export default function DesktopHeader() {
             <div className="container mx-auto px-4">
                 <div className="flex flex-row items-center justify-between w-full py-4">
                     {/* logo */}
-                    <div className="flex flex-row items-center">
-                        <Image
-                            src={"/icons/icon-512x512.png"}
-                            alt={"icon"}
-                            height={48}
-                            width={48}
-                        />
-                        <p className="font-bold text-lg">tkt.ke</p>
+                    <div className="flex flex-row items-center gap-4">
+                        <Link href="/" className="flex flex-row items-center">
+                            <Image
+                                src={"/icons/icon-512x512.png"}
+                                alt={"icon"}
+                                height={48}
+                                width={48}
+                            />
+                            <p className="font-bold text-lg">tkt.ke</p>
+                        </Link>
+                        {process.env.NODE_ENV === "development" && (
+                            <Link href="/preview">
+                                <Button variant="ghost" size="sm">Preview</Button>
+                            </Link>
+                        )}
                     </div>
                     
                     {/* center search */}

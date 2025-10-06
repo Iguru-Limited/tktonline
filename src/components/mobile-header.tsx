@@ -23,14 +23,21 @@ export default function MobileHeader() {
                 <div className="flex flex-col w-full py-3">
                     <div className="flex flex-row items-center justify-between w-full">
                         {/* logo */}
-                        <div className="flex flex-row items-center">
-                            <Image
-                                src={"/icons/icon-512x512.png"}
-                                alt={"icon"}
-                                height={40}
-                                width={40}
-                            />
-                            <p className="font-bold text-lg">tkt.ke</p>
+                        <div className="flex flex-row items-center gap-2">
+                            <Link href="/" className="flex flex-row items-center">
+                                <Image
+                                    src={"/icons/icon-512x512.png"}
+                                    alt={"icon"}
+                                    height={40}
+                                    width={40}
+                                />
+                                <p className="font-bold text-lg">tkt.ke</p>
+                            </Link>
+                            {process.env.NODE_ENV === "development" && (
+                                <Link href="/preview">
+                                    <Button variant="ghost" size="sm">Preview</Button>
+                                </Link>
+                            )}
                         </div>
                         {/* accounts/profile */}
                         <DropdownMenu>
