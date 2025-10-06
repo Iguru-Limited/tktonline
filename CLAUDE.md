@@ -103,3 +103,5 @@ The app includes PWA configuration with manifest and service worker setup (via n
 - Motion/animations via Framer Motion (motion package)
 - Toast notifications via Sonner
 - Icons from Lucide React
+- Don't use your text when committing just commit text only
+- when creating a new page component, always add a link to that page in the header
