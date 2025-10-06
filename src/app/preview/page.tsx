@@ -187,10 +187,66 @@ export default function PreviewPage() {
           <CardTitle>Spinner</CardTitle>
           <CardDescription>src/components/ui/spinner.tsx</CardDescription>
         </CardHeader>
-        <CardContent className="flex gap-4 items-center">
-          <Spinner />
-          <Spinner />
-          <Spinner />
+        <CardContent className="space-y-6">
+          <div>
+            <h3 className="text-sm font-medium mb-4">Variants</h3>
+            <div className="flex flex-wrap gap-6 items-center">
+              <div className="flex flex-col items-center gap-2">
+                <Spinner variant="primary" />
+                <span className="text-xs text-muted-foreground">Primary</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <Spinner variant="secondary" />
+                <span className="text-xs text-muted-foreground">Secondary</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <Spinner variant="success" />
+                <span className="text-xs text-muted-foreground">Success</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <Spinner variant="danger" />
+                <span className="text-xs text-muted-foreground">Danger</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <Spinner variant="warning" />
+                <span className="text-xs text-muted-foreground">Warning</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium mb-4">Sizes</h3>
+            <div className="flex flex-wrap gap-6 items-center">
+              <div className="flex flex-col items-center gap-2">
+                <Spinner size="sm" />
+                <span className="text-xs text-muted-foreground">Small</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <Spinner size="md" />
+                <span className="text-xs text-muted-foreground">Medium</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <Spinner size="lg" />
+                <span className="text-xs text-muted-foreground">Large</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium mb-4">Combinations</h3>
+            <div className="flex flex-wrap gap-6 items-center">
+              <div className="flex flex-col items-center gap-2">
+                <Spinner variant="success" size="sm" />
+                <span className="text-xs text-muted-foreground">Success Small</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <Spinner variant="danger" size="lg" />
+                <span className="text-xs text-muted-foreground">Danger Large</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <Spinner variant="warning" size="md" />
+                <span className="text-xs text-muted-foreground">Warning Medium</span>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
