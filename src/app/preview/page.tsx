@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar as CustomAvatar } from "@/components/ui/Avatar/Avatar";
 import { Spinner } from "@/components/ui/spinner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useState } from "react";
@@ -178,6 +179,92 @@ export default function PreviewPage() {
           <Avatar>
             <AvatarFallback>AB</AvatarFallback>
           </Avatar>
+        </CardContent>
+      </Card>
+
+      {/* Custom Avatar */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Custom Avatar</CardTitle>
+          <CardDescription>src/components/ui/Avatar/Avatar.tsx</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <h3 className="text-sm font-medium mb-4">Variants</h3>
+            <div className="flex flex-wrap gap-6 items-center">
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar text="John Doe" variant="primary" />
+                <span className="text-xs text-muted-foreground">Primary</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar text="Jane Smith" variant="secondary" />
+                <span className="text-xs text-muted-foreground">Secondary</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar text="Alice Green" variant="success" />
+                <span className="text-xs text-muted-foreground">Success</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar text="Bob Red" variant="danger" />
+                <span className="text-xs text-muted-foreground">Danger</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar text="Charlie Yellow" variant="warning" />
+                <span className="text-xs text-muted-foreground">Warning</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium mb-4">Sizes</h3>
+            <div className="flex flex-wrap gap-6 items-center">
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar text="Small" size="sm" />
+                <span className="text-xs text-muted-foreground">Small</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar text="Medium" size="md" />
+                <span className="text-xs text-muted-foreground">Medium</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar text="Large" size="lg" />
+                <span className="text-xs text-muted-foreground">Large</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium mb-4">States</h3>
+            <div className="flex flex-wrap gap-6 items-center">
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar text="No Profile" />
+                <span className="text-xs text-muted-foreground">Default</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar text="Disabled User" disabled />
+                <span className="text-xs text-muted-foreground">Disabled</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar />
+                <span className="text-xs text-muted-foreground">No Text</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium mb-4">Combinations</h3>
+            <div className="flex flex-wrap gap-6 items-center">
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar text="Success Large" variant="success" size="lg" />
+                <span className="text-xs text-muted-foreground">Success Large</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar text="Danger Small" variant="danger" size="sm" />
+                <span className="text-xs text-muted-foreground">Danger Small</span>
+              </div>
+              <div className="flex flex-col items-center gap-2">
+                <CustomAvatar text="Warning Medium" variant="warning" size="md" />
+                <span className="text-xs text-muted-foreground">Warning Medium</span>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
