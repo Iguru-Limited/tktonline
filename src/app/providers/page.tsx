@@ -148,17 +148,17 @@ const ServiceProvidersPage = () => {
 	// Filter providers based on search data from home page and local filters
 	const filteredProviders = transportProviders.filter(provider => {
 		// Filter by search data from home page (from/to locations)
-		const matchesSearchData = !searchData.from || !searchData.to || 
+		const matchesSearchData = !searchData.from || !searchData.to ||
 			provider.routes.toLowerCase().includes(searchData.from.toLowerCase()) ||
 			provider.routes.toLowerCase().includes(searchData.to.toLowerCase())
-		
+
 		// Filter by local search term
 		const matchesSearch = provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
 			provider.routes.toLowerCase().includes(searchTerm.toLowerCase())
-		
+
 		// Filter by category
 		const matchesCategory = selectedCategory === 'all' || provider.category === selectedCategory
-		
+
 		return matchesSearchData && matchesSearch && matchesCategory
 	})
 
@@ -172,7 +172,7 @@ const ServiceProvidersPage = () => {
 			<div className="flex-1 p-6 bg-muted">
 				<div className="container mx-auto">
 				{/* Back Button and Search Summary */}
-				<motion.div 
+				<motion.div
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.5 }}
@@ -189,17 +189,17 @@ const ServiceProvidersPage = () => {
 					{searchData.from && searchData.to && (
 						<Card className="bg-primary/5 border-primary/20">
 							<CardContent className="pt-4">
-								<div className="flex items-center gap-4">
+								<div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
 									<div className="flex items-center gap-2">
-										<MapPin className="h-4 w-4 text-primary" />
-										<span className="font-medium">{searchData.from}</span>
+										<MapPin className="h-4 w-4 text-primary shrink-0" />
+										<span className="font-medium truncate">{searchData.from}</span>
 									</div>
-									<div className="text-muted-foreground">→</div>
+									<div className="text-muted-foreground hidden sm:block">→</div>
 									<div className="flex items-center gap-2">
-										<MapPin className="h-4 w-4 text-primary" />
-										<span className="font-medium">{searchData.to}</span>
+										<MapPin className="h-4 w-4 text-primary shrink-0" />
+										<span className="font-medium truncate">{searchData.to}</span>
 									</div>
-									<div className="ml-auto">
+									<div className="sm:ml-auto">
 										<Badge variant="outline">{searchData.tripType}</Badge>
 									</div>
 								</div>
@@ -209,7 +209,7 @@ const ServiceProvidersPage = () => {
 				</motion.div>
 
 				{/* Page Title */}
-				<motion.div 
+				<motion.div
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.5, delay: 0.1 }}
@@ -217,7 +217,7 @@ const ServiceProvidersPage = () => {
 				>
 					<h1 className="text-3xl font-bold text-gray-900 mb-2">Transport Providers</h1>
 					<p className="text-gray-600">
-						{searchData.from && searchData.to 
+						{searchData.from && searchData.to
 							? `Available providers from ${searchData.from} to ${searchData.to}`
 							: "Book your journey with trusted Kenyan transport providers"
 						}
@@ -225,51 +225,53 @@ const ServiceProvidersPage = () => {
 				</motion.div>
 
 				{/* Filters and Search */}
-				<motion.div 
+				<motion.div
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.5, delay: 0.1 }}
-					className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6"
+					className="flex flex-col gap-4 mb-6"
 				>
 					<Tabs defaultValue="available" className="w-full md:w-auto">
-						<TabsList>
+						<TabsList className="w-full md:w-auto grid grid-cols-3">
 							<TabsTrigger value="available">Available <span className="ml-1 text-xs text-muted-foreground">({filteredProviders.length})</span></TabsTrigger>
 							<TabsTrigger value="luxury">Luxury <span className="ml-1 text-xs text-muted-foreground">(3)</span></TabsTrigger>
 							<TabsTrigger value="commuter">Commuter <span className="ml-1 text-xs text-muted-foreground">(5)</span></TabsTrigger>
 						</TabsList>
 					</Tabs>
-					<div className="flex flex-1 gap-2 items-center">
-						<Input 
-							placeholder="Search provider, route, etc" 
-							className="max-w-xs" 
+					<div className="flex flex-col sm:flex-row gap-2">
+						<Input
+							placeholder="Search provider, route, etc"
+							className="flex-1"
 							value={searchTerm}
 							onChange={(e) => setSearchTerm(e.target.value)}
 						/>
-						<Select value={selectedCategory} onValueChange={setSelectedCategory}>
-							<SelectTrigger className="w-[150px]">
-								<SelectValue placeholder="All Categories" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">All Categories</SelectItem>
-								<SelectItem value="Bus Service">Bus Service</SelectItem>
-								<SelectItem value="Luxury Bus">Luxury Bus</SelectItem>
-							</SelectContent>
-						</Select>
-						<div className="flex gap-1">
-							<Button 
-								variant={viewMode === 'card' ? 'default' : 'outline'} 
-								size="icon"
-								onClick={() => setViewMode('card')}
-							>
-								<Grid3X3 className="h-4 w-4" />
-							</Button>
-							<Button 
-								variant={viewMode === 'table' ? 'default' : 'outline'} 
-								size="icon"
-								onClick={() => setViewMode('table')}
-							>
-								<List className="h-4 w-4" />
-							</Button>
+						<div className="flex gap-2">
+							<Select value={selectedCategory} onValueChange={setSelectedCategory}>
+								<SelectTrigger className="flex-1 sm:w-[150px]">
+									<SelectValue placeholder="All Categories" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="all">All Categories</SelectItem>
+									<SelectItem value="Bus Service">Bus Service</SelectItem>
+									<SelectItem value="Luxury Bus">Luxury Bus</SelectItem>
+								</SelectContent>
+							</Select>
+							<div className="flex gap-1 shrink-0">
+								<Button
+									variant={viewMode === 'card' ? 'default' : 'outline'}
+									size="icon"
+									onClick={() => setViewMode('card')}
+								>
+									<Grid3X3 className="h-4 w-4" />
+								</Button>
+								<Button
+									variant={viewMode === 'table' ? 'default' : 'outline'}
+									size="icon"
+									onClick={() => setViewMode('table')}
+								>
+									<List className="h-4 w-4" />
+								</Button>
+							</div>
 						</div>
 					</div>
 				</motion.div>
@@ -277,7 +279,7 @@ const ServiceProvidersPage = () => {
 				{/* Content based on view mode */}
 				<AnimatePresence mode="wait">
 					{viewMode === 'card' ? (
-						<motion.div 
+						<motion.div
 							key="card-view"
 							initial={{ opacity: 0, scale: 0.95 }}
 							animate={{ opacity: 1, scale: 1 }}
@@ -338,7 +340,7 @@ const ServiceProvidersPage = () => {
 							))}
 						</motion.div>
 					) : (
-						<motion.div 
+						<motion.div
 							key="table-view"
 							initial={{ opacity: 0, scale: 0.95 }}
 							animate={{ opacity: 1, scale: 1 }}
@@ -355,9 +357,9 @@ const ServiceProvidersPage = () => {
 									whileHover={{ x: 5 }}
 								>
 									<Card className="p-4">
-										<div className="flex items-center justify-between">
-											<div className="flex items-center gap-4">
-												<div className="h-16 w-16 rounded-lg overflow-hidden relative">
+										<div className="flex flex-col sm:flex-row sm:items-center gap-4">
+											<div className="flex items-start gap-4 flex-1 min-w-0">
+												<div className="h-16 w-16 rounded-lg overflow-hidden relative shrink-0">
 													<Image
 														src={provider.image}
 														alt={provider.name}
@@ -365,35 +367,35 @@ const ServiceProvidersPage = () => {
 														className="object-cover"
 													/>
 												</div>
-												<div className="space-y-1">
-													<div className="flex items-center gap-2">
-														<h3 className="font-semibold">{provider.name}</h3>
-														<Badge>{provider.category}</Badge>
-														<div className="flex items-center gap-1">
+												<div className="space-y-1 min-w-0 flex-1">
+													<div className="flex flex-wrap items-center gap-2">
+														<h3 className="font-semibold truncate">{provider.name}</h3>
+														<Badge className="shrink-0">{provider.category}</Badge>
+														<div className="flex items-center gap-1 shrink-0">
 															<Star className="h-3 w-3 text-yellow-400 fill-current" />
 															<span className="text-xs">{provider.rating}</span>
 														</div>
 													</div>
-													<div className="flex items-center gap-4 text-sm text-muted-foreground">
-														<div className="flex items-center gap-1">
-															<MapPin className="h-3 w-3" />
-															<span>{provider.routes}</span>
+													<div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground">
+														<div className="flex items-center gap-1 min-w-0">
+															<MapPin className="h-3 w-3 shrink-0" />
+															<span className="truncate">{provider.routes}</span>
 														</div>
-														<div className="flex items-center gap-1">
-															<Clock className="h-3 w-3" />
-															<span>{provider.departureTime}</span>
+														<div className="flex items-center gap-1 min-w-0">
+															<Clock className="h-3 w-3 shrink-0" />
+															<span className="truncate">{provider.departureTime}</span>
 														</div>
 													</div>
 												</div>
 											</div>
-											<div className="flex items-center gap-4">
-												<div className="text-right">
-													<div className="text-xl font-bold text-primary">
+											<div className="flex items-center justify-between sm:flex-col sm:items-end gap-4">
+												<div className="text-left sm:text-right">
+													<div className="text-xl font-bold text-primary whitespace-nowrap">
 														KSh {provider.price.toLocaleString()}
 													</div>
 													<div className="text-xs text-muted-foreground">per person</div>
 												</div>
-												<Button onClick={() => handleBookNow(provider)}>
+												<Button onClick={() => handleBookNow(provider)} className="shrink-0">
 													<Bus className="h-4 w-4 mr-2" />
 													Book Now
 												</Button>
@@ -407,7 +409,7 @@ const ServiceProvidersPage = () => {
 				</AnimatePresence>
 
 				{/* Pagination */}
-				<motion.div 
+				<motion.div
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
 					transition={{ duration: 0.5, delay: 0.3 }}
