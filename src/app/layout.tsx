@@ -2,14 +2,7 @@ import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SearchProvider } from "@/contexts/SearchContext";
-import { BookingProvider } from "@/contexts/BookingContext";
-import {
-  QueryClient,
-  QueryClientProvider,
-  useQuery,
-} from "@tanstack/react-query";
-import { queryClient } from "@/utils/queryclient";
+import { Providers } from "@/components/providers";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -66,14 +59,10 @@ export default function RootLayout({
     <html lang='en'>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <QueryClientProvider client={queryClient}>
-          <SearchProvider>
-            <BookingProvider>
-              {children}
-              <Toaster />
-            </BookingProvider>
-          </SearchProvider>
-        </QueryClientProvider>
+        <Providers>
+          {children}
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );
