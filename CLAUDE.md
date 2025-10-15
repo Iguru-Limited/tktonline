@@ -105,3 +105,6 @@ The app includes PWA configuration with manifest and service worker setup (via n
 - Icons from Lucide React
 - Don't use your text when committing just commit text only
 - when creating a new page component, always add a link to that page in the header
+- Don't include this in any commit message you make 🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
