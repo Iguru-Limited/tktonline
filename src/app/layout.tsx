@@ -4,7 +4,12 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SearchProvider } from "@/contexts/SearchContext";
 import { BookingProvider } from "@/contexts/BookingContext";
-
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from "@tanstack/react-query";
+import { queryClient } from "@/utils/queryclient";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -34,9 +39,7 @@ export const metadata: Metadata = {
       { url: "/icons/icon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/icons/icon-32x32.png", sizes: "32x32", type: "image/png" },
     ],
-    apple: [
-      { url: "/icons/icon-152x152.png" },
-    ],
+    apple: [{ url: "/icons/icon-152x152.png" }],
     shortcut: ["/favicon.ico"],
   },
   twitter: {
@@ -60,16 +63,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang='en'>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <SearchProvider>
-          <BookingProvider>
-            {children}
-            <Toaster/>
-          </BookingProvider>
-        </SearchProvider>
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <QueryClientProvider client={queryClient}>
+          <SearchProvider>
+            <BookingProvider>
+              {children}
+              <Toaster />
+            </BookingProvider>
+          </SearchProvider>
+        </QueryClientProvider>
       </body>
     </html>
   );

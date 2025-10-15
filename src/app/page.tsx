@@ -24,6 +24,9 @@ export default function Home() {
   const [toError, setToError] = useState('');
   const [dateError, setDateError] = useState('');
 
+
+
+
   const handleSearch = () => {
     // Reset errors
     setFromError('');
