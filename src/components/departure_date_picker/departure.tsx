@@ -12,9 +12,15 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-export default function Calendar22() {
+interface Calendar22Props {
+  isPreDateDisabled?: boolean;
+  date?: Date;
+  onDateChange?: (date: Date | undefined) => void;
+  error?: string;
+}
+
+export default function Calendar22({ date, onDateChange, error, isPreDateDisabled }: Calendar22Props) {
   const [open, setOpen] = React.useState(false)
-  const [date, setDate] = React.useState<Date | undefined>(undefined)
 
   return (
     <div className="flex flex-col gap-3">
@@ -26,7 +32,7 @@ export default function Calendar22() {
           <Button
             variant="outline"
             id="date"
-            className="w-48 justify-between font-normal"
+            className={`w-48 justify-between font-normal ${error ? "border-red-500" : ""}`}
           >
             {date ? date.toLocaleDateString() : "Select date"}
             <ChevronDownIcon />
@@ -34,16 +40,18 @@ export default function Calendar22() {
         </PopoverTrigger>
         <PopoverContent className="w-auto overflow-hidden p-0" align="start">
           <Calendar
+            isPreDateDisabled={isPreDateDisabled}
             mode="single"
             selected={date}
             captionLayout="dropdown"
-            onSelect={(date) => {
-              setDate(date)
+            onSelect={(selectedDate) => {
+              onDateChange?.(selectedDate)
               setOpen(false)
             }}
           />
         </PopoverContent>
       </Popover>
+      {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
     </div>
   )
 }

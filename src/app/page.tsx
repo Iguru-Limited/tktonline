@@ -18,11 +18,37 @@ export default function Home() {
   const { setSearchData } = useSearch();
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [departureDate, setDepartureDate] = useState<Date | undefined>(undefined);
   const [tripType, setTripType] = useState<'one-way' | 'round-trip'>('one-way');
+  const [fromError, setFromError] = useState('');
+  const [toError, setToError] = useState('');
+  const [dateError, setDateError] = useState('');
 
   const handleSearch = () => {
-    if (!from.trim() || !to.trim()) {
-      alert('Please enter both departure and destination locations');
+    // Reset errors
+    setFromError('');
+    setToError('');
+    setDateError('');
+
+    // Validate inputs
+    let hasError = false;
+
+    if (!from.trim()) {
+      setFromError('Please enter departure location');
+      hasError = true;
+    }
+
+    if (!to.trim()) {
+      setToError('Please enter destination location');
+      hasError = true;
+    }
+
+    if (!departureDate) {
+      setDateError('Please select travel date');
+      hasError = true;
+    }
+
+    if (hasError) {
       return;
     }
 
@@ -31,7 +57,7 @@ export default function Home() {
       from: from.trim(),
       to: to.trim(),
       tripType,
-      departureDate: new Date().toISOString().split('T')[0], // Default to today
+      departureDate: departureDate!.toISOString().split('T')[0],
       returnDate: tripType === 'round-trip' ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined
     });
 
@@ -40,7 +66,7 @@ export default function Home() {
   };
 
   return (
-    // home page 
+    // home page
     <div className="flex flex-col justify-center">
       {/* header-home-section */}
       <DesktopHeader />
@@ -71,8 +97,8 @@ export default function Home() {
           <Card className="h-auto sm:h-56 p-4 sm:p-6">
             <CardContent>
               <div>
-                <RadioGroup 
-                  value={tripType === 'one-way' ? 'option-one' : 'option-two'} 
+                <RadioGroup
+                  value={tripType === 'one-way' ? 'option-one' : 'option-two'}
                   onValueChange={(value) => setTripType(value === 'option-one' ? 'one-way' : 'round-trip')}
                   className="flex felx-row"
                 >
@@ -89,31 +115,49 @@ export default function Home() {
               <div className="pt-4 flex flex-col sm:flex-row justify-between gap-4 ">
                 <div className="grid w-full sm:max-w-sm items-center gap-3">
                   <Label htmlFor="from_location" className="font-bold text-primary">From</Label>
-                  <Input 
-                    id="from_location" 
-                    type="text" 
+                  <Input
+                    id="from_location"
+                    type="text"
                     value={from}
-                    onChange={(e) => setFrom(e.target.value)}
+                    onChange={(e) => {
+                      setFrom(e.target.value);
+                      if (fromError) setFromError('');
+                    }}
                     placeholder="e.g., Nairobi"
+                    className={fromError ? "border-red-500 focus-visible:ring-red-500" : ""}
                   />
+                  {fromError && <p className="text-sm text-red-500 mt-1">{fromError}</p>}
                 </div>
                 <div className="grid w-full sm:max-w-sm items-center gap-3">
                   <Label htmlFor="to_location" className="font-bold text-primary">To</Label>
-                  <Input 
-                    id="to_location" 
-                    type="text" 
+                  <Input
+                    id="to_location"
+                    type="text"
                     value={to}
-                    onChange={(e) => setTo(e.target.value)}
+                    onChange={(e) => {
+                      setTo(e.target.value);
+                      if (toError) setToError('');
+                    }}
                     placeholder="e.g., Mombasa"
+                    className={toError ? "border-red-500 focus-visible:ring-red-500" : ""}
                   />
+                  {toError && <p className="text-sm text-red-500 mt-1">{toError}</p>}
                 </div>
                 <div className="w-full sm:w-auto">
-                  <Calendar22 />
+                  <Calendar22
+                    isPreDateDisabled={true}
+                    date={departureDate}
+                    onDateChange={(date) => {
+                      setDepartureDate(date);
+                      if (dateError) setDateError('');
+                    }}
+                    error={dateError}
+                  />
                 </div>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col align-middle justify-center">
-              <Button 
+              <Button
                 onClick={handleSearch}
                 className="flex h-12 w-full sm:w-32 rounded-2xl align-bottom"
               >
