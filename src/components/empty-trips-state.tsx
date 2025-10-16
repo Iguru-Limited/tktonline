@@ -1,4 +1,4 @@
-/* eslint-disable react/no-unescaped-entities */
+
 "use client";
 
 import React, { useState } from "react";
@@ -107,7 +107,7 @@ export default function EmptyTripsState({
                 No Trips Available
               </h2>
               <p className='text-muted-foreground mb-6 max-w-md mx-auto'>
-                We couldn't find any trips matching your search criteria. This
+                We couldn&apos;t find any trips matching your search criteria. This
                 could be because:
               </p>
 
