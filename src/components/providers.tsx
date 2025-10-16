@@ -18,11 +18,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <SearchProvider>
-        <BookingProvider>
-          <TripsProvider>
+        <TripsProvider>
+          <BookingProvider>
             {children}
-          </TripsProvider>
-        </BookingProvider>
+          </BookingProvider>
+        </TripsProvider>
       </SearchProvider>
     </QueryClientProvider>
   );

@@ -12,10 +12,15 @@ import DesktopHeader from "@/components/desktop-header";
 import MobileHeader from "@/components/mobile-header";
 import Image from "next/image";
 import { useSearch } from "@/contexts/SearchContext";
+import { useTrips } from "@/contexts/TripsContext";
+import { fetchDynamicReport } from "@/utils/api";
+import { useMutation } from "@tanstack/react-query";
+import type { TripsResponse } from "@/contexts/TripsContext";
 
 export default function Home() {
   const router = useRouter();
   const { setSearchData } = useSearch();
+  const { setTripsData, setIsLoading } = useTrips();
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [departureDate, setDepartureDate] = useState<Date | undefined>(
@@ -25,6 +30,37 @@ export default function Home() {
   const [fromError, setFromError] = useState("");
   const [toError, setToError] = useState("");
   const [dateError, setDateError] = useState("");
+
+  const { isPending, error, data, isSuccess, isError, mutate } = useMutation<
+    TripsResponse,
+    Error,
+    { from: string; to: string; date: string }
+  >({
+    mutationKey: ["trips"],
+    mutationFn: fetchDynamicReport,
+    onMutate: () => {
+      setIsLoading(true);
+    },
+    onError: (error) => {
+      console.log("Error fetching trips:", error);
+      setIsLoading(false);
+    },
+    onSuccess: (response) => {
+      console.log("Fetched trips data:", response);
+      setIsLoading(false);
+
+      // Check if the response has the expected structure
+      if (response?.success && response?.data) {
+        // Save trips data to context
+        setTripsData(response.data);
+
+        // Navigate to providers page
+        router.push("/providers");
+      } else {
+        console.error("Invalid response structure:", response);
+      }
+    },
+  });
 
   const handleSearch = () => {
     // Reset errors
@@ -68,8 +104,11 @@ export default function Home() {
           : undefined,
     });
 
-    // Navigate to providers page
-    router.push("/providers");
+    mutate({
+      from: from.trim(),
+      to: to.trim(),
+      date: departureDate!.toISOString().split("T")[0],
+    });
   };
 
   return (
@@ -186,8 +225,9 @@ export default function Home() {
             </CardContent>
             <CardFooter className='flex flex-col align-middle justify-center'>
               <Button
+                disabled={isPending}
                 onClick={handleSearch}
-                className='flex h-12 w-full sm:w-32 rounded-2xl align-bottom'>
+                className='flex h-12 w-full sm:w-32 rounded-2xl align-bottom hover:scale-105 transition-transform duration-200 ease-in-out bg-primary text-white font-bold'>
                 Search
               </Button>
             </CardFooter>
