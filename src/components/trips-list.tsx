@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,10 @@ interface TripsListProps {
     to: string;
     date: string;
   };
+  viewMode?: "card" | "table";
 }
 
-export default function TripsList({ trips, searchCriteria }: TripsListProps) {
+export default function TripsList({ trips, viewMode = "card" }: TripsListProps) {
   const { updateProvider } = useBooking();
   const router = useRouter();
 
@@ -58,7 +59,96 @@ export default function TripsList({ trips, searchCriteria }: TripsListProps) {
     {} as Record<string, Trip[]>
   );
 
-  return (
+  // Table view component
+  const TableView = () => (
+    <div className="space-y-6">
+      {Object.entries(tripsByCompany).map(([companyName, companyTrips], companyIndex) => (
+        <motion.div
+          key={companyName}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: companyIndex * 0.1 }}
+        >
+          {/* Company Header */}
+          <div className="mb-4">
+            <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <Bus className="h-5 w-5 text-primary" />
+              {companyName}
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              {companyTrips.length} {companyTrips.length === 1 ? "trip" : "trips"} available
+            </p>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left p-3 font-semibold">Vehicle</th>
+                  <th className="text-left p-3 font-semibold">Type</th>
+                  <th className="text-left p-3 font-semibold">Departure</th>
+                  <th className="text-left p-3 font-semibold">Route</th>
+                  <th className="text-left p-3 font-semibold">Seats</th>
+                  <th className="text-right p-3 font-semibold">Fare</th>
+                  <th className="text-center p-3 font-semibold">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {companyTrips.map((trip) => (
+                  <motion.tr
+                    key={trip.trip_id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    whileHover={{ backgroundColor: "rgba(0,0,0,0.02)" }}
+                    className="border-b hover:bg-muted/50 transition-colors"
+                  >
+                    <td className="p-3 font-medium">{trip.plate_number}</td>
+                    <td className="p-3">
+                      <Badge variant="secondary" className="text-xs">
+                        {trip.vehicle_type}
+                      </Badge>
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground">
+                      {formatTime(trip.departure_time)}
+                    </td>
+                    <td className="p-3 text-sm text-muted-foreground truncate max-w-[200px]">
+                      {trip.route_name}
+                    </td>
+                    <td className="p-3">
+                      <span className="text-sm">
+                        {trip.available_seats}
+                        {trip.available_seats <= 5 && trip.available_seats > 0 && (
+                          <Badge variant="destructive" className="ml-2 text-xs">
+                            Low
+                          </Badge>
+                        )}
+                      </span>
+                    </td>
+                    <td className="p-3 text-right font-bold text-primary">
+                      KSh {trip.fare.toLocaleString()}
+                    </td>
+                    <td className="p-3 text-center">
+                      <Button
+                        onClick={() => handleBookNow(trip)}
+                        disabled={trip.available_seats === 0}
+                        size="sm"
+                      >
+                        {trip.available_seats === 0 ? "Sold Out" : "Book"}
+                      </Button>
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+
+  // Card view component
+  const CardView = () => (
     <div className="space-y-6">
       {Object.entries(tripsByCompany).map(([companyName, companyTrips], companyIndex) => (
         <motion.div
@@ -175,4 +265,6 @@ export default function TripsList({ trips, searchCriteria }: TripsListProps) {
       ))}
     </div>
   );
+
+  return viewMode === "table" ? <TableView /> : <CardView />;
 }
