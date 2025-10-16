@@ -12,7 +12,6 @@ import DesktopHeader from "@/components/desktop-header";
 import MobileHeader from "@/components/mobile-header";
 import Image from "next/image";
 import { useSearch } from "@/contexts/SearchContext";
-import { useQuery } from "@tanstack/react-query";
 
 export default function Home() {
   const router = useRouter();
@@ -26,11 +25,6 @@ export default function Home() {
   const [fromError, setFromError] = useState("");
   const [toError, setToError] = useState("");
   const [dateError, setDateError] = useState("");
-
-  const { isPending, error, data, isSuccess , isError} = useQuery({
-    queryKey: ["trips"],
-    queryFn: () => console.log("trips fetched"),
-  });
 
   const handleSearch = () => {
     // Reset errors
@@ -117,7 +111,7 @@ export default function Home() {
                       value === "option-one" ? "one-way" : "round-trip"
                     )
                   }
-                  className='flex felx-row'>
+                  className='flex flex-row'>
                   <div className='flex items-center space-x-2'>
                     <RadioGroupItem value='option-one' id='option-one' />
                     <Label htmlFor='option-one'>One Way</Label>
