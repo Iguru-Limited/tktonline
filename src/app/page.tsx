@@ -225,8 +225,9 @@ export default function Home() {
             </CardContent>
             <CardFooter className='flex flex-col align-middle justify-center'>
               <Button
+                disabled={isPending}
                 onClick={handleSearch}
-                className='flex h-12 w-full sm:w-32 rounded-2xl align-bottom'>
+                className='flex h-12 w-full sm:w-32 rounded-2xl align-bottom hover:scale-105 transition-transform duration-200 ease-in-out bg-primary text-white font-bold'>
                 Search
               </Button>
             </CardFooter>
