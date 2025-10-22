@@ -34,6 +34,8 @@ export default function TripsList({ trips, viewMode = "card" }: TripsListProps) 
       routes: trip.route_name,
       price: trip.fare,
       rating: 4.5, // Default rating as it's not in the API response
+      trip_id: trip.trip_id,
+      company_id: trip.company_id,
     });
     router.push("/booking");
   };

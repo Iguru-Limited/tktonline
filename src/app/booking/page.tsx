@@ -1,9 +1,9 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from "motion/react"
-import { ArrowLeft, Bus } from "lucide-react"
+import { ArrowLeft, Bus, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -13,39 +13,120 @@ import SeatSelection from "@/components/seat-selection"
 import PaymentForm from "@/components/payment-form"
 import TicketReceipt from "@/components/ticket-receipt"
 import { useBooking } from "@/contexts/BookingContext"
+import { fetchTripDetails } from "@/utils/api"
 import Link from "next/link"
 
-// Mock vehicle data with seats
-const generateVehicleData = (providerName: string) => ({
-  id: '1',
-  name: `${providerName} Express`,
-  type: 'Standard AC Seater',
-  departureTime: '08:00 AM',
-  arrivalTime: '02:00 PM',
-  duration: '6 hours',
-  seats: Array.from({ length: 40 }, (_, index) => {
-    const row = String.fromCharCode(65 + Math.floor(index / 4)) // A, B, C, etc.
-    const position = (index % 4) + 1
-    const seatNumber = `${row}${position}`
-    
-    return {
-      id: `seat-${seatNumber}`,
-      number: seatNumber,
-      isAvailable: Math.random() > 0.3, // 70% availability
-      isSelected: false,
-      price: 2500 + Math.floor(Math.random() * 1000) // Random price between 2500-3500
+interface TripDetails {
+  trip: {
+    id: number;
+    route_name: string;
+    vehicle_plate: string;
+    vehicle_type: string;
+    departure_time: string;
+    arrival_time?: string;
+  };
+  seats: Array<{
+    number: string;
+    row: number;
+    col: number;
+    status: string;
+    destination: string;
+  }>;
+  vehicle_configuration: {
+    id: number;
+    layout: Array<Array<{label: string, type?: string} | null>>;
+  };
+}
+
+// Helper function to transform API response to our Vehicle format
+const transformTripData = (tripDetails: TripDetails, baseFare: number) => {
+  const { trip, seats, vehicle_configuration } = tripDetails
+  
+  return {
+    id: trip.id.toString(),
+    name: `${trip.route_name} - ${trip.vehicle_plate}`,
+    type: trip.vehicle_type,
+    departureTime: new Date(trip.departure_time).toLocaleTimeString('en-KE', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    }),
+    arrivalTime: trip.arrival_time ? new Date(trip.arrival_time).toLocaleTimeString('en-KE', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    }) : 'TBD',
+    duration: 'TBD', // Calculate if needed
+    seats: seats.map((seat) => ({
+      number: seat.number,
+      row: seat.row,
+      col: seat.col,
+      status: seat.status as "available" | "booked",
+      fare: baseFare, // Use the trip's base fare for all seats
+      destination: seat.destination
+    })),
+    vehicleConfiguration: {
+      id: vehicle_configuration.id,
+      layout: vehicle_configuration.layout
     }
-  })
-})
+  }
+}
 
 type BookingStep = 'provider' | 'seats' | 'payment' | 'receipt'
 
 export default function BookingPage() {
   const router = useRouter()
-  const { bookingData, updateVehicle, updateSelectedSeats, updateCustomerDetails, updatePaymentDetails, completeBooking, clearBooking } = useBooking()
+  const { bookingData, updateVehicle, updateSelectedSeats, updateCustomerDetails, updatePaymentDetails, clearBooking } = useBooking()
   const [currentStep, setCurrentStep] = useState<BookingStep>('provider')
-  const [vehicle, setVehicle] = useState(generateVehicleData(bookingData.provider?.name || 'Chania'))
+  const [vehicle, setVehicle] = useState<{
+    id: string;
+    name: string;
+    type: string;
+    departureTime: string;
+    arrivalTime: string;
+    duration: string;
+    seats: Array<{
+      number: string;
+      row: number;
+      col: number;
+      status: string;
+      fare: number;
+      destination: string;
+    }>;
+    vehicleConfiguration: {
+      id: number;
+      layout: Array<Array<{label: string, type?: string} | null>>;
+    };
+  } | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const lastProviderIdRef = useRef<number | null>(null)
+
+  const fetchTripData = useCallback(async () => {
+    if (!bookingData.provider?.trip_id || !bookingData.provider?.company_id) {
+      setError('Missing trip or company information')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const tripDetails = await fetchTripDetails(
+        bookingData.provider.company_id, 
+        bookingData.provider.trip_id
+      )
+      
+      // Use the base fare from the provider selection
+      const baseFare = bookingData.provider.price
+      const transformedVehicle = transformTripData(tripDetails as TripDetails, baseFare)
+      setVehicle(transformedVehicle)
+      updateVehicle(transformedVehicle)
+    } catch (err) {
+      console.error('Error fetching trip details:', err)
+      setError('Failed to load trip details. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }, [bookingData.provider?.trip_id, bookingData.provider?.company_id, bookingData.provider?.price, updateVehicle])
 
   useEffect(() => {
     if (!bookingData.provider) {
@@ -53,43 +134,14 @@ export default function BookingPage() {
       return
     }
     
-    // Only generate vehicle data if provider actually changed
+    // Only fetch trip data if provider actually changed
     if (lastProviderIdRef.current !== bookingData.provider.id) {
       lastProviderIdRef.current = bookingData.provider.id
-      const newVehicle = generateVehicleData(bookingData.provider.name)
-      setVehicle(newVehicle)
-      updateVehicle(newVehicle)
+      fetchTripData()
     }
-  }, [bookingData.provider?.id, bookingData.provider?.name, router, updateVehicle, vehicle])
+  }, [bookingData.provider, router, fetchTripData])
 
-  const handleSeatSelect = (seat: { id: string; number: string; price: number }) => {
-    const updatedSeats = [...bookingData.selectedSeats]
-    const existingIndex = updatedSeats.findIndex(s => s.id === seat.id)
-    
-    if (existingIndex >= 0) {
-      // Remove seat if already selected
-      updatedSeats.splice(existingIndex, 1)
-    } else {
-      // Add seat if not selected
-      updatedSeats.push({
-        ...seat,
-        isAvailable: true,
-        isSelected: true
-      })
-    }
-    
-    updateSelectedSeats(updatedSeats)
-  }
 
-  const handlePaymentComplete = (
-    customerDetails: { fullName: string; idNumber: string; mobilePhone: string }, 
-    paymentDetails: { method: 'mpesa' | 'airtel' | 'cash'; phoneNumber: string; amount: number }
-  ) => {
-    updateCustomerDetails(customerDetails)
-    updatePaymentDetails(paymentDetails)
-    completeBooking()
-    setCurrentStep('receipt')
-  }
 
   const handleNewBooking = () => {
     clearBooking()
@@ -119,7 +171,29 @@ export default function BookingPage() {
               <p className="text-gray-600">Review your selected provider and proceed to seat selection</p>
             </div>
 
-            {bookingData.provider && (
+            {loading && (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                  <p className="text-gray-600">Loading trip details...</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {error && (
+              <Card>
+                <CardContent className="p-6">
+                  <div className="text-center">
+                    <p className="text-red-600 mb-4">{error}</p>
+                    <Button onClick={fetchTripData} variant="outline">
+                      Try Again
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {!loading && !error && bookingData.provider && (
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -149,6 +223,7 @@ export default function BookingPage() {
                     onClick={() => setCurrentStep('seats')}
                     className="w-full"
                     size="lg"
+                    disabled={!vehicle}
                   >
                     <Bus className="h-4 w-4 mr-2" />
                     Proceed to Seat Selection
@@ -160,32 +235,31 @@ export default function BookingPage() {
         )
 
       case 'seats':
-        return (
+        return vehicle ? (
           <SeatSelection
-            seats={vehicle.seats}
-            selectedSeats={bookingData.selectedSeats}
-            onSeatSelect={handleSeatSelect}
-            onContinue={() => setCurrentStep('payment')}
-            providerName={bookingData.provider?.name || ''}
-            vehicleType={vehicle.type}
-            route={bookingData.provider?.routes || ''}
+            vehicle={vehicle}
+            onSeatsChange={updateSelectedSeats}
+            onConfirm={() => setCurrentStep('payment')}
           />
+        ) : (
+          <div className="container mx-auto p-6 max-w-2xl text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">Loading seat layout...</p>
+          </div>
         )
 
       case 'payment':
         return (
           <PaymentForm
-            selectedSeats={bookingData.selectedSeats}
-            totalAmount={bookingData.totalAmount}
-            onPaymentComplete={handlePaymentComplete}
-            onBack={() => setCurrentStep('seats')}
+            onCustomerDetailsChange={updateCustomerDetails}
+            onPaymentDetailsChange={updatePaymentDetails}
+            onComplete={() => setCurrentStep('receipt')}
           />
         )
 
       case 'receipt':
         return (
           <TicketReceipt
-            bookingData={bookingData}
             onDownloadPDF={() => console.log('PDF downloaded')}
             onNewBooking={handleNewBooking}
           />

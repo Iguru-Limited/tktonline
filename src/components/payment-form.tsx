@@ -8,32 +8,32 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { motion } from "motion/react"
 import { CreditCard, Smartphone, Wallet } from "lucide-react"
+import { useBooking } from "@/contexts/BookingContext"
 
 interface PaymentFormProps {
-  selectedSeats: Array<{
-    id: string
-    number: string
-    price: number
-  }>
-  totalAmount: number
-  onPaymentComplete: (customerDetails: {
+  onCustomerDetailsChange?: (details: {
     fullName: string
     idNumber: string
     mobilePhone: string
-  }, paymentDetails: {
+  }) => void
+  onPaymentDetailsChange?: (details: {
     method: 'mpesa' | 'airtel' | 'cash'
     phoneNumber: string
     amount: number
   }) => void
-  onBack: () => void
+  onComplete?: () => void
 }
 
 export default function PaymentForm({
-  selectedSeats,
-  totalAmount,
-  onPaymentComplete,
-  onBack
+  onCustomerDetailsChange,
+  onPaymentDetailsChange,
+  onComplete
 }: PaymentFormProps) {
+  const { bookingData } = useBooking()
+  
+  // Get data from booking context
+  const selectedSeats = bookingData.selectedSeats || []
+  const totalAmount = bookingData.totalAmount || 0
   const [customerDetails, setCustomerDetails] = useState({
     fullName: '',
     idNumber: '',
@@ -59,14 +59,25 @@ export default function PaymentForm({
 
     setIsProcessing(true)
     
-    // Simulate payment processing
-    setTimeout(() => {
-      onPaymentComplete(customerDetails, {
+    // Update booking context
+    if (onCustomerDetailsChange) {
+      onCustomerDetailsChange(customerDetails)
+    }
+    
+    if (onPaymentDetailsChange) {
+      onPaymentDetailsChange({
         method: paymentMethod,
         phoneNumber: paymentMethod === 'cash' ? '' : phoneNumber,
         amount: totalAmount
       })
+    }
+    
+    // Simulate payment processing
+    setTimeout(() => {
       setIsProcessing(false)
+      if (onComplete) {
+        onComplete()
+      }
     }, 2000)
   }
 
@@ -211,12 +222,18 @@ export default function PaymentForm({
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {selectedSeats.map((seat) => (
-                  <div key={seat.id} className="flex justify-between items-center">
-                    <span>Seat {seat.number}</span>
-                    <span>KSh {seat.price.toLocaleString()}</span>
+                {selectedSeats && selectedSeats.length > 0 ? (
+                  selectedSeats.map((seat) => (
+                    <div key={seat.number} className="flex justify-between items-center">
+                      <span>Seat {seat.number}</span>
+                      <span>KSh {(seat.fare || 0).toLocaleString()}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-4">
+                    No seats selected
                   </div>
-                ))}
+                )}
                 
                 <div className="border-t pt-3">
                   <div className="flex justify-between items-center text-lg font-bold">
@@ -231,18 +248,9 @@ export default function PaymentForm({
           {/* Action Buttons */}
           <div className="flex gap-4">
             <Button
-              type="button"
-              variant="outline"
-              onClick={onBack}
-              className="flex-1"
-            >
-              Back to Seats
-            </Button>
-            
-            <Button
               type="submit"
               disabled={isProcessing}
-              className="flex-1"
+              className="w-full"
               size="lg"
             >
               {isProcessing ? (

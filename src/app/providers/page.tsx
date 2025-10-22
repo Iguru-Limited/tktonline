@@ -28,7 +28,7 @@ export default function ProvidersPage() {
   const [activeTab, setActiveTab] = useState("available");
 
   // Get trips data
-  const trips = tripsData?.trips || [];
+  const trips = useMemo(() => tripsData?.trips || [], [tripsData?.trips]);
   const search_criteria = tripsData?.search_criteria;
 
   // Filtering logic

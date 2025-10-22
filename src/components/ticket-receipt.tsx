@@ -3,53 +3,22 @@
 import React from 'react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { motion } from "motion/react"
-import { Download, CheckCircle, MapPin, User, CreditCard } from "lucide-react"
-import { generateTicketPDF } from "@/utils/ticketGenerator"
+import { Download, CheckCircle } from "lucide-react"
+import { TicketQRCode } from './ticket-qr-code'
+import { getFullLocationName, getBoardingPoint } from '@/config/locations'
+import { useBooking } from '@/contexts/BookingContext'
 
 interface TicketReceiptProps {
-  bookingData: {
-    provider: {
-      name: string
-      category: string
-      routes: string
-    } | null
-    vehicle: {
-      name: string
-      type: string
-      departureTime: string
-      arrivalTime: string
-      duration: string
-    } | null
-    selectedSeats: Array<{
-      id: string
-      number: string
-      price: number
-    }>
-    customerDetails: {
-      fullName: string
-      idNumber: string
-      mobilePhone: string
-    }
-    bookingReference: string | null
-    totalAmount: number
-    paymentDetails: {
-      method: 'mpesa' | 'airtel' | 'cash'
-      phoneNumber: string
-      amount: number
-    } | null
-  }
   onDownloadPDF: () => void
   onNewBooking: () => void
 }
 
 export default function TicketReceipt({
-  bookingData,
   onDownloadPDF,
   onNewBooking
 }: TicketReceiptProps) {
-  // Show loading state only if absolutely critical data is missing
+  const { bookingData } = useBooking()
   if (!bookingData.bookingReference) {
     return (
       <div className="container mx-auto p-6 max-w-2xl">
@@ -61,16 +30,25 @@ export default function TicketReceipt({
     )
   }
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!bookingData.provider || !bookingData.vehicle) {
       alert('Cannot generate PDF: Missing booking information')
+      return
+    }
+
+    // Check if we're on the client side
+    if (typeof window === 'undefined') {
+      alert('PDF generation is only available in the browser')
       return
     }
 
     const pdfData = {
       provider: bookingData.provider,
       vehicle: bookingData.vehicle,
-      selectedSeats: bookingData.selectedSeats,
+      selectedSeats: bookingData.selectedSeats.map(seat => ({
+        number: seat.number,
+        fare: seat.fare || 0
+      })),
       customerDetails: bookingData.customerDetails,
       bookingReference: bookingData.bookingReference || 'N/A',
       totalAmount: bookingData.totalAmount,
@@ -78,18 +56,51 @@ export default function TicketReceipt({
                     bookingData.paymentDetails?.method === 'airtel' ? 'Airtel Money' : 'Cash'
     }
     
-    generateTicketPDF(pdfData)
-    onDownloadPDF()
-  }
+    try {
+      // Show loading state
+      const button = document.querySelector('[data-pdf-button]') as HTMLButtonElement
+      if (button) {
+        button.disabled = true
+        button.textContent = 'Generating PDF...'
+      }
 
-  const getPaymentMethodDisplay = (method: string) => {
-    switch (method) {
-      case 'mpesa': return 'M-Pesa'
-      case 'airtel': return 'Airtel Money'
-      case 'cash': return 'Cash'
-      default: return method
+      // Dynamic import to ensure it only runs on client side
+      const { generateTicketPDF } = await import('@/utils/ticketGenerator')
+      await generateTicketPDF(pdfData)
+      onDownloadPDF()
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      alert(`Error generating PDF: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      // Reset button state
+      const button = document.querySelector('[data-pdf-button]') as HTMLButtonElement
+      if (button) {
+        button.disabled = false
+        button.textContent = 'Download PDF'
+      }
     }
   }
+
+  // Parse route information to match the image structure
+  const getRouteInfo = () => {
+    const routes = bookingData.provider?.routes || 'DHK-RAJ'
+    const [origin, destination] = routes.split('-').map(route => route.trim())
+    
+    return {
+      origin: origin || 'DHK',
+      destination: destination || 'RAJ',
+      originFull: getFullLocationName(origin),
+      destinationFull: getFullLocationName(destination)
+    }
+  }
+
+  // Get boarding point from origin terminal using dynamic configuration
+  const getBoardingPointForRoute = () => {
+    const originCode = routeInfo.origin
+    return getBoardingPoint(originCode)
+  }
+
+  const routeInfo = getRouteInfo()
 
   return (
     <div className="container mx-auto p-6 max-w-2xl">
@@ -113,168 +124,138 @@ export default function TicketReceipt({
           <p className="text-gray-600">Your ticket has been successfully booked</p>
         </div>
 
-        {/* Receipt */}
-        <Card className="overflow-hidden">
-          {/* Header */}
-          <div className="bg-primary text-white p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-2xl font-bold">tkt.ke</h2>
-                <p className="text-primary-foreground/80">Your trusted travel partner</p>
-              </div>
-              <div className="text-right text-sm">
-                <div>Booking #{bookingData.bookingReference || 'N/A'}</div>
-                <div>{new Date().toLocaleDateString('en-KE')}</div>
-                <div>{new Date().toLocaleTimeString('en-KE')}</div>
+
+        {/* Digital Ticket - United Airlines Style */}
+        <div className="max-w-sm mx-auto bg-slate-500 p-4 rounded-3xl">
+          <div className="relative">
+            {/* Blue circular notches on sides */}
+            <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-500 rounded-full z-10"></div>
+            <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-slate-500 rounded-full z-10"></div>
+            
+            <div className="bg-white rounded-3xl overflow-hidden shadow-lg border border-gray-200 relative">
+              {/* Header with logo/provider name */}
+              <div className="p-6 pb-4">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">
+                      {'TKT'}
+                    </span>
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-800">
+                    {bookingData.provider?.name || 'Bus Transport'}
+                  </h2>
+                </div>
+                
+                {/* Route Information */}
+                <div className="grid grid-cols-3 gap-4 items-center mb-8">
+                  <div>
+                    <div className="text-sm text-gray-400 mb-1">From</div>
+                    <div className="md:text-2xl font-bold text-gray-900">{routeInfo.origin}</div>
+                    <div className="text-xs text-gray-500 mt-1">{routeInfo.originFull}</div>
+                    <div className="text-xs text-gray-500">
+                      {bookingData.vehicle?.departureTime}
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-center">
+                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </div>
+                  
+                  <div className="text-right">
+                    <div className="text-sm text-gray-400 mb-1">To</div>
+                    <div className="md:text-2xl font-bold text-gray-900">{routeInfo.destination}</div>
+                    <div className="text-xs text-gray-500 mt-1">{routeInfo.destinationFull}</div>
+                    <div className="text-xs text-gray-500">
+                      {bookingData.vehicle?.arrivalTime}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Gate and Seat */}
+                <div className="grid grid-cols-2 gap-6 mb-8">
+                  <div>
+                    <div className="text-sm text-gray-400 mb-1">Boarding</div>
+                    <div className="md:text-2xl font-bold text-gray-900">
+                      {getBoardingPointForRoute().substring(0, 3).toUpperCase()}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-gray-400 mb-1">Seat</div>
+                    <div className="md:text-2xl font-bold text-gray-900">
+                      {bookingData.selectedSeats.map(seat => seat.number).join(', ')}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Full Name and Class */}
+                <div className="grid grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <div className="text-sm text-gray-400 mb-1">Full Name</div>
+                    <div className="md:text-lg font-semibold text-gray-900">
+                      {bookingData.customerDetails.fullName}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-gray-400 mb-1">Vehicle</div>
+                    <div className="md:text-lg font-semibold text-gray-900">
+                      {bookingData.vehicle?.name || 'Standard'}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Booking Code */}
+                <div className="mb-4">
+                  <div className="text-sm text-gray-900 font-semibold mb-2">
+                    Booking Code <span className="ml-4 font-bold">{bookingData.bookingReference}</span>
+                  </div>
+                </div>
+                
+                {/* QR Code */}
+                <div className="bg-white pt-2 flex justify-center">
+                  <TicketQRCode bookingData={bookingData} size={128} />
+                </div>
               </div>
             </div>
           </div>
-
-          <CardContent className="p-6 space-y-6">
-            {/* Journey Details */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
-                Journey Details
-              </h3>
-              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Provider:</span>
-                  <span className="font-medium">{bookingData.provider?.name || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Service:</span>
-                  <span className="font-medium">{bookingData.provider?.category || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Route:</span>
-                  <span className="font-medium">{bookingData.provider?.routes || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Vehicle:</span>
-                  <span className="font-medium">{bookingData.vehicle?.name || 'N/A'} ({bookingData.vehicle?.type || 'N/A'})</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Departure:</span>
-                  <span className="font-medium">{bookingData.vehicle?.departureTime || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Arrival:</span>
-                  <span className="font-medium">{bookingData.vehicle?.arrivalTime || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Duration:</span>
-                  <span className="font-medium">{bookingData.vehicle?.duration || 'N/A'}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Passenger Details */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <User className="h-5 w-5 text-primary" />
-                Passenger Details
-              </h3>
-              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Name:</span>
-                  <span className="font-medium">{bookingData.customerDetails.fullName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">ID Number:</span>
-                  <span className="font-medium">{bookingData.customerDetails.idNumber}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Phone:</span>
-                  <span className="font-medium">{bookingData.customerDetails.mobilePhone}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Seat Details */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Seat Details</h3>
-              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                {bookingData.selectedSeats.map((seat, index) => (
-                  <div key={index} className="flex justify-between">
-                    <span className="text-gray-600">Seat {seat.number}:</span>
-                    <span className="font-medium">KSh {seat.price.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Payment Summary */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-primary" />
-                Payment Summary
-              </h3>
-              <div className="bg-primary/5 p-4 rounded-lg space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Payment Method:</span>
-                  <Badge variant="outline" className="bg-white">
-                    {getPaymentMethodDisplay(bookingData.paymentDetails?.method || 'cash')}
-                  </Badge>
-                </div>
-                {bookingData.paymentDetails?.phoneNumber && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Phone Number:</span>
-                    <span className="font-medium">{bookingData.paymentDetails.phoneNumber}</span>
-                  </div>
-                )}
-                <div className="border-t pt-2 mt-2">
-                  <div className="flex justify-between items-center text-xl font-bold">
-                    <span>Total Amount:</span>
-                    <span className="text-primary">KSh {bookingData.totalAmount.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Important Notes */}
-            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-              <h4 className="font-semibold text-yellow-800 mb-2">Important Information:</h4>
-              <ul className="text-sm text-yellow-700 space-y-1">
-                <li>• Please arrive 30 minutes before departure</li>
-                <li>• Bring valid ID for verification</li>
-                <li>• This ticket is non-transferable</li>
-                <li>• Keep this ticket safe for your journey</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+        </div>
 
         {/* Action Buttons */}
         <div className="flex gap-4">
           <Button
             onClick={handleDownloadPDF}
+            data-pdf-button
             variant="outline"
-            className="flex-1"
+            className='md:flex-1'
             size="lg"
           >
             <Download className="h-4 w-4 mr-2" />
-            Download PDF Ticket
+            Download Ticket
           </Button>
           
           <Button
             onClick={onNewBooking}
-            className="flex-1"
+            className='md:flex-1'
             size="lg"
           >
-            Book Another Trip
+            Book Another
           </Button>
         </div>
 
-        {/* QR Code Placeholder */}
-        <div className="text-center">
-          <div className="inline-block bg-gray-100 p-4 rounded-lg">
-            <div className="w-24 h-24 bg-gray-300 rounded flex items-center justify-center">
-              <span className="text-xs text-gray-500">QR Code</span>
+        {/* Additional Information Card */}
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="text-center">
+              <h3 className="font-semibold text-green-800 mb-2">Important Information</h3>
+              <ul className="text-sm text-green-700 space-y-1">
+                <li>• Arrive at boarding point 15 minutes before departure</li>
+                <li>• Bring valid ID matching passenger name</li>
+                <li>• Ticket valid only for specified date and time</li>
+              </ul>
             </div>
-            <p className="text-xs text-gray-500 mt-2">Scan for digital verification</p>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </motion.div>
     </div>
   )

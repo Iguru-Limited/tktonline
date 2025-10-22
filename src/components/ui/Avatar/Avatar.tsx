@@ -1,6 +1,7 @@
 import React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
 
 const avatarVariants = cva(
   'inline-flex items-center justify-center rounded-full font-semibold uppercase overflow-hidden',
@@ -65,10 +66,12 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
         {...props}
       >
         {src ? (
-          <img
+          <Image
             src={src}
             alt={alt || text || 'User avatar'}
             className="size-full object-cover"
+            width={40}
+            height={40}
           />
         ) : (
           <span>{initials}</span>

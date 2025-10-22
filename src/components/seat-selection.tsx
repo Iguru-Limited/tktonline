@@ -5,34 +5,61 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { motion } from "motion/react"
 import { Seat } from "@/contexts/BookingContext"
+import { useBooking } from "@/contexts/BookingContext"
+
+interface Vehicle {
+  id: string;
+  name: string;
+  type: string;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string;
+  seats: Array<{
+    number: string;
+    row: number;
+    col: number;
+    status: string;
+    fare: number;
+    destination: string;
+  }>;
+  vehicleConfiguration: {
+    id: number;
+    layout: Array<Array<{label: string, type?: string} | null>>;
+  };
+}
 
 interface SeatSelectionProps {
-  seats: Seat[]
-  selectedSeats: Seat[]
-  onSeatSelect: (seat: Seat) => void
-  onContinue: () => void
-  providerName: string
-  vehicleType: string
-  route: string
+  vehicle?: Vehicle
+  onSeatsChange?: (seats: Seat[]) => void
+  onConfirm?: () => void
 }
 
 export default function SeatSelection({
-  seats,
-  selectedSeats,
-  onSeatSelect,
-  onContinue,
-  providerName,
-  vehicleType,
-  route
+  vehicle,
+  onSeatsChange,
+  onConfirm
 }: SeatSelectionProps) {
-  const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+  const { bookingData, updateSelectedSeats } = useBooking()
   
-  const getSeatForPosition = (row: string, position: number): Seat | null => {
-    const seatNumber = `${row}${position}`
-    return seats.find(seat => seat.number === seatNumber) || null
+  // Get data from booking context or props
+  const seats = vehicle?.seats || []
+  const selectedSeats = bookingData.selectedSeats || []
+  const providerName = bookingData.provider?.name || vehicle?.name || 'Bus Company'
+  const vehicleType = bookingData.provider?.category || vehicle?.type || 'Bus'
+  const route = bookingData.provider?.routes || vehicle?.name || 'Route'
+  const vehicleConfiguration = vehicle?.vehicleConfiguration || { id: 1, layout: [] }
+  const getSeatByNumber = (seatNumber: string): Seat | null => {
+    const seat = seats.find(seat => seat.number === seatNumber)
+    if (!seat) return null
+    return {
+      ...seat,
+      status: seat.status as "available" | "booked"
+    }
   }
 
-  const totalAmount = selectedSeats.reduce((sum, seat) => sum + seat.price, 0)
+  const totalAmount = selectedSeats && selectedSeats.length > 0 
+    ? selectedSeats.reduce((sum, seat) => sum + (seat.fare || 0), 0) 
+    : 0
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
@@ -80,78 +107,62 @@ export default function SeatSelection({
                     @{providerName} {vehicleType}
                   </div>
 
-                  {/* Seat Layout */}
+                  {/* Dynamic Seat Layout */}
                   <div className="grid grid-cols-5 gap-2 p-8">
-                    {rows.map((row) => (
-                      <React.Fragment key={row}>
-                        {/* Left side seats */}
-                        <div className="flex gap-2">
-                          {[1, 2].map((position) => {
-                            const seat = getSeatForPosition(row, position)
-                            if (!seat) return <div key={position} className="w-8"></div>
-                            
-                            const isSelected = selectedSeats.some(s => s.id === seat.id)
-                            const isAvailable = seat.isAvailable
-                            
-                            return (
-                              <motion.button
-                                key={seat.id}
-                                onClick={() => isAvailable && onSeatSelect(seat)}
-                                disabled={!isAvailable}
-                                className={`
-                                  w-8 h-8 rounded text-xs font-medium transition-all duration-200
-                                  ${!isAvailable 
-                                    ? 'bg-gray-400 text-white cursor-not-allowed' 
-                                    : isSelected
-                                    ? 'bg-primary text-white shadow-lg'
-                                    : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-primary hover:shadow-md'
+                    {vehicleConfiguration.layout.map((row, rowIndex) => (
+                      <React.Fragment key={rowIndex}>
+                        {row.map((cell, colIndex) => {
+                          if (cell === null) {
+                            return <div key={colIndex} className="w-8"></div>
+                          }
+                          
+                          const seat = getSeatByNumber(cell.label)
+                          if (!seat) return <div key={colIndex} className="w-8"></div>
+                          
+                          const isSelected = selectedSeats.some(s => s.number === seat.number)
+                          const isAvailable = seat.status === "available"
+                          
+                          return (
+                            <motion.button
+                              key={seat.number}
+                              onClick={() => {
+                                if (isAvailable) {
+                                  const newSeat: Seat = { 
+                                    number: seat.number, 
+                                    fare: seat.fare,
+                                    row: seat.row,
+                                    col: seat.col,
+                                    status: seat.status as "available" | "booked",
+                                    destination: seat.destination
                                   }
-                                `}
-                                whileHover={isAvailable && !isSelected ? { scale: 1.1 } : {}}
-                                whileTap={isAvailable && !isSelected ? { scale: 0.95 } : {}}
-                              >
-                                {seat.number}
-                              </motion.button>
-                            )
-                          })}
-                        </div>
-
-                        {/* Aisle */}
-                        <div className="flex items-center justify-center">
-                          <div className="text-xs text-gray-400 font-medium">{row}</div>
-                        </div>
-
-                        {/* Right side seats */}
-                        <div className="flex gap-2">
-                          {[3, 4].map((position) => {
-                            const seat = getSeatForPosition(row, position)
-                            if (!seat) return <div key={position} className="w-8"></div>
-                            
-                            const isSelected = selectedSeats.some(s => s.id === seat.id)
-                            const isAvailable = seat.isAvailable
-                            
-                            return (
-                              <motion.button
-                                key={seat.id}
-                                onClick={() => isAvailable && onSeatSelect(seat)}
-                                disabled={!isAvailable}
-                                className={`
-                                  w-8 h-8 rounded text-xs font-medium transition-all duration-200
-                                  ${!isAvailable 
-                                    ? 'bg-gray-400 text-white cursor-not-allowed' 
-                                    : isSelected
-                                    ? 'bg-primary text-white shadow-lg'
-                                    : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-primary hover:shadow-md'
+                                  const updatedSeats = isSelected 
+                                    ? selectedSeats.filter(s => s.number !== seat.number)
+                                    : [...selectedSeats, newSeat]
+                                  
+                                  updateSelectedSeats(updatedSeats)
+                                  
+                                  if (onSeatsChange) {
+                                    onSeatsChange(updatedSeats)
                                   }
-                                `}
-                                whileHover={isAvailable && !isSelected ? { scale: 1.1 } : {}}
-                                whileTap={isAvailable && !isSelected ? { scale: 0.95 } : {}}
-                              >
-                                {seat.number}
-                              </motion.button>
-                            )
-                          })}
-                        </div>
+                                }
+                              }}
+                              disabled={!isAvailable}
+                              className={`
+                                w-8 h-8 rounded text-xs font-medium transition-all duration-200
+                                ${!isAvailable 
+                                  ? 'bg-gray-400 text-white cursor-not-allowed' 
+                                  : isSelected
+                                  ? 'bg-primary text-white shadow-lg'
+                                  : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-primary hover:shadow-md'
+                                }
+                              `}
+                              whileHover={isAvailable && !isSelected ? { scale: 1.1 } : {}}
+                              whileTap={isAvailable && !isSelected ? { scale: 0.95 } : {}}
+                            >
+                              {seat.number}
+                            </motion.button>
+                          )
+                        })}
                       </React.Fragment>
                     ))}
                   </div>
@@ -168,15 +179,15 @@ export default function SeatSelection({
               <CardTitle className="text-lg">Your Selection</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {selectedSeats.length > 0 ? (
+              {selectedSeats && selectedSeats.length > 0 ? (
                 <>
                   <div>
                     <h4 className="font-medium mb-2">Selected Seats:</h4>
                     <div className="space-y-1">
                       {selectedSeats.map((seat) => (
-                        <div key={seat.id} className="flex justify-between items-center">
+                        <div key={seat.number} className="flex justify-between items-center">
                           <span>Seat {seat.number}</span>
-                          <span className="font-medium">KSh {seat.price.toLocaleString()}</span>
+                          <span className="font-medium">KSh {(seat.fare || 0).toLocaleString()}</span>
                         </div>
                       ))}
                     </div>
@@ -190,7 +201,11 @@ export default function SeatSelection({
                   </div>
 
                   <Button 
-                    onClick={onContinue}
+                    onClick={() => {
+                      if (onConfirm) {
+                        onConfirm()
+                      }
+                    }}
                     className="w-full mt-4"
                     size="lg"
                   >

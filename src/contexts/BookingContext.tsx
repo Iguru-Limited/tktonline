@@ -3,11 +3,17 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react'
 
 export interface Seat {
-  id: string
   number: string
-  isAvailable: boolean
-  isSelected: boolean
-  price: number
+  row: number
+  col: number
+  status: "available" | "booked"
+  fare: number | null
+  destination: string | null
+}
+
+interface VehicleConfiguration {
+  id: number
+  layout: Array<Array<{label: string, type?: string} | null>>
 }
 
 interface Vehicle {
@@ -18,6 +24,7 @@ interface Vehicle {
   departureTime: string
   arrivalTime: string
   duration: string
+  vehicleConfiguration: VehicleConfiguration
 }
 
 interface CustomerDetails {
@@ -40,6 +47,8 @@ interface BookingData {
     routes: string
     price: number
     rating: number
+    trip_id: number
+    company_id: number
   } | null
   vehicle: Vehicle | null
   selectedSeats: Seat[]
@@ -98,7 +107,7 @@ export const BookingProvider: React.FC<BookingProviderProps> = ({ children }) =>
   }, [])
 
   const updateSelectedSeats = useCallback((seats: Seat[]) => {
-    const totalAmount = seats.reduce((sum, seat) => sum + seat.price, 0)
+    const totalAmount = seats.reduce((sum, seat) => sum + (seat.fare || 0), 0)
     setBookingData(prev => ({ ...prev, selectedSeats: seats, totalAmount }))
   }, [])
 
