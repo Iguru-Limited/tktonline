@@ -60,7 +60,7 @@ export default function TripsList({ trips, viewMode = "card" }: TripsListProps) 
         >
           {trips.map((trip, index) => (
             <motion.div
-              key={trip.trip_id}
+              key={trip.trip_id + (trip.from_destination || "")}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.05 }}

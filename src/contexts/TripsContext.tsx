@@ -14,6 +14,8 @@ export interface Trip {
   trip_date: string | null;
   departure_time: string;
   available_seats: number;
+  to_destination?: string;
+  from_destination?: string;
   fare: number;
 }
 
