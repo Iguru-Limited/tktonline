@@ -134,7 +134,7 @@ export default function TripsList({ trips, viewMode = "card" }: TripsListProps) 
                   <div className="flex items-center justify-between pt-3 border-t">
                     <div>
                       <div className="text-2xl font-bold text-primary">
-                        KSh {trip.fare.toLocaleString()}
+                        KSh {trip?.fare?.toLocaleString() || "0"}
                       </div>
                       <div className="text-xs text-muted-foreground">per seat</div>
                     </div>
